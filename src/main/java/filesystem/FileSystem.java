@@ -164,7 +164,7 @@ public class FileSystem {
         for (int i = 0; i < INode.NUM_BLOCK_POINTERS; i++) {
             int blockPointer = iNodeForFile.getBlockPointer(i);  // get the current data block pointer
             byte[] blockDataBytes = diskDevice.readDataBlock(blockPointer);  // get the data block as a byte array
-            String blockData = new String(blockDataBytes, StandardCharsets.UTF_8);  // convert bytes to String
+            String blockData = new String(blockDataBytes, StandardCharsets.UTF_8).trim();  // convert bytes to String
             fileData.append(blockData);  // append the current block data to the rest of the file data
         }
 
@@ -184,7 +184,7 @@ public class FileSystem {
 
         int blockSize = 512;  // data blocks contain 512 bytes
         byte[] dataBytes = data.getBytes();  // convert the String to an array of bytes
-        allocateBlocksForFile(this.iNodeNumber, dataBytes.length);  // allocate blocks for the data to be written
+        int [] allocatedBlocks = allocateBlocksForFile(this.iNodeNumber, dataBytes.length);  // allocate blocks for the data to be written
 
         for (int i = 0; i < dataBytes.length; i += blockSize) {
             // get a 512 byte chunk of data
@@ -192,11 +192,8 @@ public class FileSystem {
             System.arraycopy(dataBytes, i, dataBlock, 0, Math.min(blockSize, dataBytes.length - i));
 
             // find the next free block and write the data to it
-            for (int j = 0; j < freeBlockList.getFreeBlockList().length; j++) {
-                if (isBlockFree(j)) {
-                    diskDevice.writeDataBlock(dataBlock, j);
-                }
-            }
+            int index = i / blockSize;
+            diskDevice.writeDataBlock(dataBlock, allocatedBlocks[index]);
         }
     }
 
