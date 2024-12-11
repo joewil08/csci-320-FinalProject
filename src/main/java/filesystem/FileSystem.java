@@ -1,6 +1,8 @@
 package filesystem;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 
 public class FileSystem {
@@ -145,31 +147,57 @@ public class FileSystem {
 
 
     /**
-     * Add your Javadoc documentation for this method
+     * Reads all data blocks of a file
+     * Returns a String consisting of all the data
      */
     public String read(int fileDescriptor) throws IOException {
-        // TODO: Replace this line with your code
+        if (fileDescriptor != this.iNodeNumber){
+            throw new IOException("FileSystem::read: file descriptor, "+
+                    fileDescriptor + " does not match file descriptor " +
+                    "of open file");
+        }
 
-        /* [valery]
-             reads contents of file from its associated data blocks by traversing the inode file pointers and returns it
-         */
-        return null;
+        // create a StringBuilder that will hold all the file data and will later be returned as a String
+        StringBuilder fileData = new StringBuilder();
+
+        // traverse all the data block pointers of the INode
+        for (int i = 0; i < INode.NUM_BLOCK_POINTERS; i++) {
+            int blockPointer = iNodeForFile.getBlockPointer(i);  // get the current data block pointer
+            byte[] blockDataBytes = diskDevice.readDataBlock(blockPointer);  // get the data block as a byte array
+            String blockData = new String(blockDataBytes, StandardCharsets.UTF_8);  // convert bytes to String
+            fileData.append(blockData);  // append the current block data to the rest of the file data
+        }
+
+        return fileData.toString();
     }
 
 
     /**
-     * Add your Javadoc documentation for this method
+     * Allocates data blocks and writes data to the file
      */
     public void write(int fileDescriptor, String data) throws IOException {
+        if (fileDescriptor != this.iNodeNumber){
+            throw new IOException("FileSystem::write: file descriptor, "+
+                    fileDescriptor + " does not match file descriptor " +
+                    "of open file");
+        }
 
-        // TODO: Replace this line with your code
+        int blockSize = 512;  // data blocks contain 512 bytes
+        byte[] dataBytes = data.getBytes();  // convert the String to an array of bytes
+        allocateBlocksForFile(this.iNodeNumber, dataBytes.length);  // allocate blocks for the data to be written
 
-        /* [valery]
-             split data into 512 bytes chunks and allocate a data block for each chunk
-            update the inode with the correct pointers
-         */
-        allocateBlocksForFile(this.iNodeNumber, data.getBytes().length);
+        for (int i = 0; i < dataBytes.length; i += blockSize) {
+            // get a 512 byte chunk of data
+            byte[] dataBlock = new byte[blockSize];
+            System.arraycopy(dataBytes, i, dataBlock, 0, Math.min(blockSize, dataBytes.length - i));
 
+            // find the next free block and write the data to it
+            for (int j = 0; j < freeBlockList.getFreeBlockList().length; j++) {
+                if (isBlockFree(j)) {
+                    diskDevice.writeDataBlock(dataBlock, j);
+                }
+            }
+        }
     }
 
 
