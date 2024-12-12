@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 
 public class FileSystemTest {
@@ -151,4 +152,95 @@ public class FileSystemTest {
         }
     }
 
+    @Test
+    void readFileTest01() {
+        try{
+            int messageRepeat = 10;
+            String testData = "This is some text ";
+            FileSystem fs = new FileSystem();
+            String fileName = "test01.txt";
+            String theMessage = null;
+            int fd = fs.create(fileName);
+
+            theMessage = new String();
+            for (int i = 0; i < messageRepeat; i++) {
+                theMessage = theMessage.concat(testData + i + ".  ");
+            }
+            fs.write(fd, theMessage);
+            String expected = theMessage;
+            String actual = fs.read(fd);
+            fs.close(fd);
+            assertEquals(expected, actual);
+
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    void readEmptyFileTest02() {
+        try{
+            FileSystem fs = new FileSystem();
+            String fileName = "test02.txt";
+            String theMessage = null;
+            int fd = fs.create(fileName);
+
+            String expected = "";
+            String actual = fs.read(fd);
+            fs.close(fd);
+            assertEquals(expected, actual);
+
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    void writeToFileTest01() {
+        try{
+            int messageRepeat = 500;
+            String testData = "This is some text ";
+            FileSystem fs = new FileSystem();
+            String fileName = "test01.txt";
+            String theMessage = null;
+            int fd = fs.create(fileName);
+
+            theMessage = new String();
+            for (int i = 0; i < messageRepeat; i++) {
+                theMessage = theMessage.concat(testData + i + ".  ");
+            }
+            fs.write(fd, theMessage);
+            String expected = theMessage;
+            String actual = fs.read(fd);
+            fs.close(fd);
+            assertEquals(expected, actual);
+
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    void writeEmptyStringToFileTest02() {
+        try{
+            int messageRepeat = 10;
+            String testData = "This is some text ";
+            FileSystem fs = new FileSystem();
+            String fileName = "test01.txt";
+            String theMessage = "";
+            int fd = fs.create(fileName);
+
+            assertThrows(IOException.class, () -> {
+                fs.write(fd, theMessage);
+                fs.close(fd);
+            });
+
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+            e.printStackTrace();
+        }
+    }
 }

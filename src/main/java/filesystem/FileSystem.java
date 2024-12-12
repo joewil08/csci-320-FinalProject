@@ -164,7 +164,7 @@ public class FileSystem {
         for (int i = 0; i < INode.NUM_BLOCK_POINTERS; i++) {
             int blockPointer = iNodeForFile.getBlockPointer(i);  // get the current data block pointer
             byte[] blockDataBytes = diskDevice.readDataBlock(blockPointer);  // get the data block as a byte array
-            String blockData = new String(blockDataBytes, StandardCharsets.UTF_8).trim();  // convert bytes to String
+            String blockData = new String(blockDataBytes, StandardCharsets.UTF_8).replace("\u0000", "");  // convert bytes to String
             fileData.append(blockData);  // append the current block data to the rest of the file data
         }
 
@@ -180,6 +180,9 @@ public class FileSystem {
             throw new IOException("FileSystem::write: file descriptor, "+
                     fileDescriptor + " does not match file descriptor " +
                     "of open file");
+        }
+        if (data.isEmpty()) {
+            throw new IOException("FileSystem::write: data cannot be an empty string");
         }
 
         int blockSize = 512;  // data blocks contain 512 bytes
